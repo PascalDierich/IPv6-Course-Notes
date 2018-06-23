@@ -1,0 +1,136 @@
+###################################################################
+#                                                                 #
+#  Course:             IPv6 in modernen Netzwerken                #
+#  bereitgestellt von: openHPI                                    #
+#  gehalten von:       Wilhelm Boeddinghaus                       #
+#  Notizen von:        Pascal Dierich <dierich.pascal@gmail.com>  #
+#  Inhalt:                                                        #
+#       - Darstellung                                             #
+#       - Aufbau                                                  #
+#       - Link Local Adressen                                     #
+#       - Adresstypen                                             #
+#       - Netzwerkautomatisierung                                 #
+#                                                                 #
+###################################################################
+
+Darstellung:
+===========
+
+        128 bit length -> 16 bytes
+
+        Je 2 Bytes mit ':' getrennt
+           -> führende Nullen können weggelassen werden
+           -> ein Block von Nullen kann durch '::' abgekürzt werden
+
+
+Aufbau:
+======
+        vordere 64 bit -> Network Identifier
+           -> vorderen 32 bit sind vom RIPE NCC
+           -> hinteren 32 bit vergibt Inhaber frei
+   
+        hintere 64 bit -> Host    Identifier (= Interface Identifier)
+           => Jedes Netzwerk bekommt ein /64 bit grosses Netzwerk
+
+
+Link Local Adressen:
+===================
+
+        +------------------------------------------------+
+        | Network Identifier |    | HostIdentifier       |
+        | ---------------------------------------------- |
+        | fe80                 ::   8cb7:xxxx:xxxx:xxxx  |
+        |                                                |
+        |    ˆ- immer fe80     ˆ      ˆ- Zufall          |
+        |                      |- Ersatz für Nullen      |
+        |                                                |
+        +------------------------------------------------+
+
+        - Jedes Interface hat automatisch eine Link Local Adresse
+          => Jedes Interface kann sofort mit IPv6 (Layer 3) arbeiten
+             (kein warten auf DHCP-Server wie bei IPv4)
+
+        - Link Local heisst, _kein_ Paket wird vom Router weitergeleitet
+
+
+Adresstypen:
+===========
+        +-----------------------------------------+
+        | Link   Local         <->  fe80::/10     |
+        | Site   Local         <->  fec0::/10     |
+        | Unique Local         <->  fc00::/07     |
+        | Documentation        <->  2001:db8::/32 |
+        | Global Unicast       <->  2000::/3      |
+        | Multicast            <->  ff00::/8      |
+        | Multicast Link Local <->  ff02::/16     |
+        +-----------------------------------------+
+
+        - Unique Local fc00::/7
+          -> für eindeutige Zuweisung gedacht
+          -> _darf_ nur lokal genutzt werden
+          -> kein Reverse DNS vorhanden
+          -> _muss_ von Firewall verworfen werden
+
+       - Documentation 2001:db8::/32
+         -> Dient nur der Dokumentation
+         -> Keine Nutzung in produktiven Netzwerken
+         -> _muss_ von Firewall verworfen werden
+
+       - Global Unicast 2000::/3
+         -> Alle öffentlichen Adressen sind Global Unicast
+         -> entspricht nur 1/8 des vorhandenen nutzbaren Bereiches
+         -> Reverse DNS vorhanden
+         -> Vergabe durch RIR
+            -> RIPE in Europa
+
+       - Multicast ff00::/8
+         -> hat 2 Anwendungen
+            -> Ausstrahlung von Inhalten
+            -> Automatisierung im Netzwerk
+
+       - Multicast Link Local ff02::/16
+         -> automatisches Finden von Rechnern/Routern mit Link Local Adressen
+            -> ersetzt ARP Protokoll
+
+
+Netzwerkautomatisierung:
+=======================
+
+       - In IPv6 werden Router automatische gefunden.
+         -> Router Solicitation  (ICMPv6 Paket, Layer 3)
+            => "Suche nach Router"
+         -> Router Advertisement (ICMPv6 Paket, Layer 3)
+            => "Antwort eines Routers"
+            => Wird auch periodisch gesendet
+            => Hiermit sendet der Router den Network Identifier
+
+            => Anschliessend bildet der Rechner seinen Host Identifier selber
+               ==> Daraus ergibt sich die 128 bit IPv6 Global Unicast Adresse
+
+       - DNS-Server Adresse?
+         -> kann im Router Advertisement mit enthalten sein
+         -> kann über einen DHCPv6 Server geliefert werden
+            (Android nimmt nur DNS Informationen aus dem Router Advertisement an)
+
+       - DHCPv6
+         -> Router Advertisement steuert ob und wie DHCP Server genutzt wird
+         -> Stateless DHCP
+            => IPv6 Adresse schon vorhanden
+            => nur statische Informationen werden geliefert
+         -> Stateful DHCP
+            => eine zusätzliche IPv6 Adresse wird vom DHCP-Server geliefert
+               -> Es müssen Tabellen (=state) verwaltet werden
+            => statische Informationen werden auch geliefert
+         -> liefert _keinen_ Default Gateway
+
+
+       +------------------------------------------------------------------------------------------------------+
+       |    DHCPv6                                         DHCPv4                                             |
+       |                                                                                                      |
+       | - stateless & statefull DHCPv6                 - nur stateful DHCP                                   |
+       | - Steuerung durch Router Advertisement         - Konfiguration des Interfaces eintscheided über DHCP |
+       | - kann zusätzliche IPv6 Adresse vergeben       - eine IPv4 Adresse wird vergeben                     |
+       | - keine Angabe zur Netwerkgrösse,              - Netzmaske wird übertragen                           |
+       |   keine Netwerkmaske                                                                                 |
+       | - kein Default Gateway                         - Default Gateway wird vergeben                       |
+       +------------------------------------------------------------------------------------------------------+
