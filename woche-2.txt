@@ -1,0 +1,92 @@
+###################################################################
+#                                                                 #
+#  Course:             IPv6 in modernen Netzwerken                #
+#  bereitgestellt von: openHPI                                    #
+#  gehalten von:       Wilhelm Boeddinghaus                       #
+#  Notizen von:        Pascal Dierich <dierich.pascal@gmail.com>  #
+#  Inhalt:                                                        #
+#       - Adressplan                                              #
+#       - Erweiterbarkeit                                         #
+#       - Fragmentierung                                          #
+#       - Erste Schritte                                          #
+#       - Nachteile Dualstack                                     #
+#                                                                 #
+###################################################################
+
+Adressplan:
+==========
+        - /48 Netzwerk umfasst ca. 65.000 Netwerke
+
+
+Erweiterbarkeit:
+===============
+        - IPv6 unterstützt Header-Chaining
+          -> Erweiterung durch Extension Header
+          -> Hardware Forwarding (z.B. durch ASIC's) wird besser unterstützt
+          -> Maximum Transfer Unit aber bleibt gleich
+             => Mehr Header -> Weniger Daten pro Paket
+
+        Extension Headers:
+        -----------------
+                - IPsec Authentication (AH) Header
+                  -> zur Authentifizierung des Senders
+                  (-> wird auch von IPv4 unterstützt)
+                  
+                - IPsec Encapsulated Security Payload (ESP) Header
+                  -> zur Sicherung der Vertraulichkeit von IP-Paketen
+
+                - IPsec Internet Key Exchange (IKE) Header
+                  -> zum Austausch von Keys
+
+                ==> Machen Protokoll erweiterbar
+                ==> Grosse Flexibilität
+                ==> Schwere Implementierung in Firewalls und IPS-Systemen
+
+
+Fragmentierung:
+==============
+
+      +-------------------------------------------------------------------------------------------+
+      |                IPv6                                            IPv4                       |
+      |                ====                                            ====                       |
+      | - nur Endhost darf fragmentieren                - jedes Gerät darf fragmentieren          |
+      | - kein "Do-not-Fragment" Bit im Header          - Steuerung über "Do-not-fragment" Bit    |
+      |                                                   -> kann überschrieben werden            |
+      | - Router muss zu grosse Pakete verwerfen        - Router darf zu grosse Pakete verwerfen  |
+      |   -> "ICMPv6 Packet too Big" wird versendet       -> "ICMP Packet too Big" wird versendet |
+      |                                                                                           |
+      +-------------------------------------------------------------------------------------------+
+
+      - Wenn "Packet too Big" Pakete nicht ankommen (z.B. gefiltert werden)
+        => timeout -> Verbindung kommt nicht zustande
+
+
+Erste Schritte:
+==============
+
+        - Webseiten
+          -> Immer Dualstack
+             -> Besucher entscheidet über IPv6 oder IPv4
+
+        - Email
+          -> Server - Server Kommunikation
+             -> IPv6
+          -> Server - Client Kommunikation
+             -> Dualstack
+                -> Client entscheidet über IPv6 oder IPv4
+
+        - VPN Access
+          -> IPv6 als Tunnelprotokoll
+          -> IPv4 unzuverlässiger durch Carrier Grade NAT
+
+
+Nachteile Dualstack:
+===================
+
+        - getrennte Statistiken
+        - alle Regeln jeder Firewall müssen doppelt eingetragen werden
+        - 2 Routing Protokolle
+          -> OSPFv2 - IPv4
+          -> OSPFv3 - IPv6
+        - doppelte Anzahl an Log-Files
+          -> Automatische Auswertung wird komplizierter
